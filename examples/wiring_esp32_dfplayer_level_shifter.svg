@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+  <style>
+    .box { fill:#f7f7f7; stroke:#333; stroke-width:2; }
+    .title { font: bold 16px sans-serif; }
+    .text { font: 14px sans-serif; }
+    .wire { stroke:#0066cc; stroke-width:2; fill:none; }
+    .gnd { stroke:#444; stroke-width:2; fill:none; stroke-dasharray:4 3; }
+    .pwr5 { stroke:#cc0000; stroke-width:2; fill:none; }
+    .pwr33 { stroke:#cc6600; stroke-width:2; fill:none; }
+    .note { font: italic 12px sans-serif; fill:#333; }
+    .pin { font: 12px monospace; }
+  </style>
+
+  <!-- ESP32 -->
+  <rect x="40" y="60" width="220" height="180" class="box"/>
+  <text x="50" y="80" class="title">ESP32 Dev Board (3.3V)</text>
+  <text x="50" y="110" class="pin">GPIO17 (TX2)</text>
+  <text x="50" y="135" class="pin">GPIO16 (RX2)</text>
+  <text x="50" y="160" class="pin">3V3</text>
+  <text x="50" y="185" class="pin">GND</text>
+  <text x="50" y="210" class="pin">VIN (5V)</text>
+
+  <!-- Level Shifter -->
+  <rect x="350" y="40" width="200" height="220" class="box"/>
+  <text x="360" y="60" class="title">Level Shifter (BSS138)</text>
+  <text x="360" y="90" class="pin">LV = 3.3V (from ESP32)</text>
+  <text x="360" y="110" class="pin">HV = 5V (from ESP32 VIN)</text>
+  <text x="360" y="130" class="pin">GND = common ground</text>
+  <text x="360" y="160" class="pin">LV1 &lt;– ESP32 TX2 (GPIO17)</text>
+  <text x="360" y="180" class="pin">HV1 –&gt; DFPlayer RX</text>
+  <text x="360" y="200" class="pin">HV2 &lt;– DFPlayer TX</text>
+  <text x="360" y="220" class="pin">LV2 –&gt; ESP32 RX2 (GPIO16)</text>
+
+  <!-- DFPlayer -->
+  <rect x="680" y="60" width="180" height="180" class="box"/>
+  <text x="690" y="80" class="title">DFPlayer Mini</text>
+  <text x="690" y="110" class="pin">RX</text>
+  <text x="690" y="130" class="pin">TX</text>
+  <text x="690" y="150" class="pin">VCC (5V)</text>
+  <text x="690" y="170" class="pin">GND</text>
+
+  <!-- ESP32 VIN powers DF and Shifter HV -->
+
+  <!-- Speaker -->
+  <rect x="40" y="300" width="220" height="100" class="box"/>
+  <text x="50" y="320" class="title">Speaker</text>
+  <text x="50" y="350" class="pin">DF SPK_1 / SPK_2</text>
+
+  <!-- Wires -->
+  <!-- ESP32 3V3 to Shifter LV -->
+  <line x1="120" y1="160" x2="350" y2="95" class="pwr33"/>
+  <!-- ESP32 GND to Shifter/DF GND -->
+  <line x1="120" y1="185" x2="350" y2="125" class="gnd"/>
+  <line x1="120" y1="185" x2="770" y2="170" class="gnd"/>
+
+  <!-- ESP32 TX2 -> LV1 -->
+  <line x1="200" y1="110" x2="350" y2="165" class="wire"/>
+  <!-- LV1 -> HV1 -> DF RX -->
+  <line x1="550" y1="180" x2="680" y2="110" class="wire"/>
+
+  <!-- DF TX -> HV2 -> LV2 -> ESP32 RX2 -->
+  <line x1="680" y1="130" x2="550" y2="200" class="wire"/>
+  <line x1="350" y1="220" x2="200" y2="135" class="wire"/>
+
+  <!-- ESP32 VIN (5V) to DF VCC and Shifter HV -->
+  <line x1="150" y1="210" x2="770" y2="150" class="pwr5"/>
+  <line x1="150" y1="210" x2="450" y2="110" class="pwr5"/>
+
+  <!-- Speaker implied connection -->
+  <text x="280" y="345" class="note">Connect DFPlayer SPK_1/SPK_2 directly to speaker</text>
+
+  <!-- Notes -->
+  <text x="40" y="440" class="note">Use FAT32 microSD; place file at /mp3/0001.mp3. Keep grounds common among ESP32, DFPlayer, and 5V.</text>
+  <text x="40" y="460" class="note">Do NOT feed 5V into ESP32 3V3. Here DFPlayer VCC and Shifter HV are powered from ESP32 VIN (5V).</text>
+</svg>
