@@ -10,6 +10,21 @@ DFRobotDFPlayerMini dfplayer;
 bool dfReady = false;
 int currentVolume = DFPLAYER_DEFAULT_VOLUME;
 
+// Wait for SD card/device to be ready by polling file count
+static bool waitForSdReady(unsigned long timeoutMs, int &outFiles) {
+  unsigned long start = millis();
+  outFiles = -1;
+  while (millis() - start < timeoutMs) {
+    int files = dfplayer.readFileCounts();
+    if (files >= 0) { // got a response
+      outFiles = files;
+      return true;
+    }
+    delay(150);
+  }
+  return false;
+}
+
 void printDetail(uint8_t type, int value) {
   switch (type) {
     case TimeOut: Serial.println("DFPlayer: Time Out!"); break;
@@ -63,35 +78,31 @@ void setup() {
   } else {
     dfReady = true;
     Serial.println("DFPlayer initialized.");
-    dfplayer.setTimeOut(500);
+    dfplayer.setTimeOut(1000);
+    // Explicitly select SD before setting volume/EQ (avoid extra reset after begin for better stability)
+    dfplayer.outputDevice(DFPLAYER_DEVICE_SD);
+    delay(1200);
+
     currentVolume = DFPLAYER_DEFAULT_VOLUME;
     dfplayer.volume(currentVolume);
     dfplayer.EQ(DFPLAYER_EQ_NORMAL);
-    // Some modules need a reset and explicit device select for SD
-    dfplayer.reset();
-    delay(1200);
-    dfplayer.outputDevice(DFPLAYER_DEVICE_SD);
-    delay(200);
 
-    // Check mp3 folder and try to play /mp3/0001.mp3; fallback to root index 1
-    int mp3Count = dfplayer.readFileCountsInFolder(1);
-    Serial.printf("/mp3 folder file count: %d\n", mp3Count);
-    if (mp3Count > 0) {
-      Serial.println("Attempting: /mp3/0001.mp3");
-      dfplayer.playMp3Folder(1);
-    } else {
-      Serial.println("No files detected in /mp3; attempting root index 1");
-      dfplayer.play(1);
-    }
+    // Ensure SD is ready before attempting playback
+    int totalFiles = -1;
+    bool sdReady = waitForSdReady(4000, totalFiles);
+    Serial.printf("SD ready: %s, files=%d\n", sdReady ? "yes" : "no", totalFiles);
 
+    // Always try /mp3/0001.mp3 first
+    Serial.println("Attempting: /mp3/0001.mp3");
+    delay(500);
+    dfplayer.playMp3Folder(1);
     delay(1500);
     int state = dfplayer.readState();
-    Serial.printf("Initial play state: %d (1=playing)\n", state);
+    int curr = dfplayer.readCurrentFileNumber();
+    Serial.printf("Initial play state: %d (1=playing), current=%d\n", state, curr);
     if (state != 1) {
-      Serial.println("Playback did not start; retrying device select and play...");
-      dfplayer.outputDevice(DFPLAYER_DEVICE_SD);
-      delay(200);
-      if (mp3Count > 0) dfplayer.playMp3Folder(1); else dfplayer.play(1);
+      Serial.println("Playback didn’t start; falling back to root index 1 (0001.mp3 in root)");
+      dfplayer.play(1);
     }
   }
 
@@ -112,10 +123,9 @@ void loop() {
   if (millis() - lastReport > 3000) {
     lastReport = millis();
     if (dfReady) {
-      int vol = dfplayer.readVolume();
-      int files = dfplayer.readFileCounts();
+      int state = dfplayer.readState();
       int curr = dfplayer.readCurrentFileNumber();
-      Serial.printf("Status: vol=%d files=%d current=%d\n", vol, files, curr);
+      Serial.printf("Status: state=%d current=%d\n", state, curr);
     }
   }
 
